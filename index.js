@@ -128,6 +128,18 @@
   page.len = 0;
 
   /**
+   * The position of the current entry in the browser history.
+   * @type {number}
+   *
+   *     page.cur == 0;
+   *     page('/login');
+   *     page.cur == 1;
+   */
+
+  page.cur = 0;
+
+
+  /**
    * Get or set basepath to `path`.
    *
    * @param {string} path
@@ -178,6 +190,7 @@
     if (!running) return;
     page.current = '';
     page.len = 0;
+    page.cur = 0;
     running = false;
     document.removeEventListener(clickEvent, onclick, false);
     window.removeEventListener('popstate', onpopstate, false);
@@ -217,6 +230,7 @@
       // wait for the next tick to go back in history
       history.back();
       page.len--;
+      page.cur--;
     } else if (path) {
       setTimeout(function() {
         page.show(path, state);
@@ -416,6 +430,8 @@
 
   Context.prototype.pushState = function() {
     page.len++;
+    page.cur++;
+    this.state.ordinal = page.cur;
     history.pushState(this.state, this.title, hashbang && this.path !== '/' ? '#!' + this.path : this.canonicalPath);
   };
 
@@ -426,6 +442,7 @@
    */
 
   Context.prototype.save = function() {
+    this.state.ordinal = page.cur;
     history.replaceState(this.state, this.title, hashbang && this.path !== '/' ? '#!' + this.path : this.canonicalPath);
   };
 
@@ -528,6 +545,7 @@
       if (!loaded) return;
       if (e.state) {
         var path = e.state.path;
+        page.cur = e.state.ordinal;
         page.replace(path, e.state);
       } else {
         page.show(location.pathname + location.hash, undefined, undefined, false);
