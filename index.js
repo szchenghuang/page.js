@@ -117,7 +117,8 @@
   page.current = '';
 
   /**
-   * Number of pages navigated to.
+   * Number of pages navigated to. Also the number of entries in the browser history.
+   * Note that moving backward or forward does not change the number.
    * @type {number}
    *
    *     page.len == 0;
@@ -285,7 +286,7 @@
     var ctx = new Context(path, state);
     page.current = ctx.path;
     ctx.init = init;
-    ctx.save(); // save before dispatching, which may redirect
+    ctx.replaceState(); // save before dispatching, which may redirect
     if (false !== dispatch) page.dispatch(ctx);
     return ctx;
   };
@@ -441,7 +442,7 @@
    * @api public
    */
 
-  Context.prototype.save = function() {
+  Context.prototype.replaceState = function() {
     this.state.ordinal = page.cur;
     history.replaceState(this.state, this.title, hashbang && this.path !== '/' ? '#!' + this.path : this.canonicalPath);
   };
@@ -524,7 +525,7 @@
 
 
   /**
-   * Handle "populate" events.
+   * Handle "popstate" events.
    */
 
   var onpopstate = (function () {
