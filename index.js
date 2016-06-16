@@ -545,6 +545,22 @@
     return function onpopstate(e) {
       if (!loaded) return;
       if (e.state) {
+        var movement =
+          (page.cur < e.state.ordinal) ? 'forward' :
+          (e.state.ordinal < page.cur) ? 'backward' :
+          null;
+
+        var toConfirm = (true === Meteor.confirm && movement !== null);
+        var confirmed = toConfirm ? window.confirm('Confirm to leave?') : true;
+        if (!confirmed) {
+          if (movement) {
+            // These will trigger one more onpopstate to restore the url,
+            // where movement is neither forward nor backward.
+            if (movement === 'forward')   { history.back();    return; }
+            if (movement === 'backward' ) { history.forward(); return; }
+          }
+          return;
+        }
         var path = e.state.path;
         page.cur = e.state.ordinal;
         page.replace(path, e.state);
@@ -616,6 +632,9 @@
     if (base && orig === path) return;
 
     e.preventDefault();
+    var toConfirm = (true === Meteor.confirm);
+    var confirmed = toConfirm ? window.confirm('Confirm to leave?') : true;
+    if (!confirmed) { return; }
     page.show(orig);
   }
 
