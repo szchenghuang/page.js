@@ -132,13 +132,16 @@
    * The position of the current entry in the browser history.
    * @type {number}
    *
-   *     page.cur == 0;
+   *     page.ordinal == 0;
    *     page('/login');
-   *     page.cur == 1;
+   *     page.ordinal == 1;
+   *     page.back();
+   *     page.ordinal == 0;
    */
 
-  page.cur = 0;
+  page.ordinal = -1;
 
+  page.pathsShouldConfirmLeave = [];
 
   /**
    * Get or set basepath to `path`.
@@ -191,7 +194,7 @@
     if (!running) return;
     page.current = '';
     page.len = 0;
-    page.cur = 0;
+    page.ordinal = -1;
     running = false;
     document.removeEventListener(clickEvent, onclick, false);
     window.removeEventListener('popstate', onpopstate, false);
@@ -231,7 +234,7 @@
       // wait for the next tick to go back in history
       history.back();
       page.len--;
-      page.cur--;
+      page.ordinal--;
     } else if (path) {
       setTimeout(function() {
         page.show(path, state);
@@ -327,6 +330,27 @@
       nextEnter();
     }
   };
+
+  page.pushConfirmLeavingPath = function(path) {
+    if (page.pathsShouldConfirmLeave.constructor !== Array) {
+      page.pathsShouldConfirmLeave.constructor = [];
+    }
+    page.pathsShouldConfirmLeave.push(path);
+  };
+
+  page.removeConfirmLeavingPath = function(path) {
+    var found = false;
+    for (var i = 0; i < page.pathsShouldConfirmLeave.length; ++i) {
+      page.pathsShouldConfirmLeave.splice(i, 1);
+      found = true;
+    }
+    return found;
+  };
+
+  page.shouldConfirmPathLeave = function(path) {
+    return page.pathsShouldConfirmLeave.includes(path);
+  };
+
 
   /**
    * Unhandled `ctx`. When it's not the initial
@@ -431,8 +455,8 @@
 
   Context.prototype.pushState = function() {
     page.len++;
-    page.cur++;
-    this.state.ordinal = page.cur;
+    page.ordinal++;
+    this.state.ordinal = page.ordinal;
     history.pushState(this.state, this.title, hashbang && this.path !== '/' ? '#!' + this.path : this.canonicalPath);
   };
 
@@ -443,7 +467,7 @@
    */
 
   Context.prototype.replaceState = function() {
-    this.state.ordinal = page.cur;
+    this.state.ordinal = page.ordinal;
     history.replaceState(this.state, this.title, hashbang && this.path !== '/' ? '#!' + this.path : this.canonicalPath);
   };
 
@@ -546,23 +570,21 @@
       if (!loaded) return;
       if (e.state) {
         var movement =
-          (page.cur < e.state.ordinal) ? 'forward' :
-          (e.state.ordinal < page.cur) ? 'backward' :
-          null;
+          (page.ordinal < e.state.ordinal) ? 1 : // forward
+          (e.state.ordinal < page.ordinal) ? -1 : // backward
+          0; // No movement.
 
-        var toConfirm = (true === Meteor.confirm && movement !== null);
-        var confirmed = toConfirm ? window.confirm('Confirm to leave?') : true;
-        if (!confirmed) {
-          if (movement) {
-            // These will trigger one more onpopstate to restore the url,
-            // where movement is neither forward nor backward.
-            if (movement === 'forward')   { history.back();    return; }
-            if (movement === 'backward' ) { history.forward(); return; }
-          }
-          return;
+        var shouldConfirm = (0 !== movement && page.shouldConfirmPathLeave(e.state.path));
+        var confirmCanceled = shouldConfirm && !window.confirm('Confirm to leave?');
+        if (!confirmCanceled) {
+          // These will trigger one more onpopstate to restore the url,
+          // where movement is neither forward nor backward.
+          if (0 < movement) { history.back();    return; }
+          if (movement < 0) { history.forward(); return; }
         }
+
         var path = e.state.path;
-        page.cur = e.state.ordinal;
+        page.ordinal = e.state.ordinal;
         page.replace(path, e.state);
       } else {
         page.show(location.pathname + location.hash, undefined, undefined, false);
@@ -632,9 +654,9 @@
     if (base && orig === path) return;
 
     e.preventDefault();
-    var toConfirm = (true === Meteor.confirm);
-    var confirmed = toConfirm ? window.confirm('Confirm to leave?') : true;
-    if (!confirmed) { return; }
+    var shouldConfirm = page.shouldConfirmPathLeave(orig);
+    var confirmCanceled = shouldConfirm && !window.confirm('Confirm to leave?');
+    if (confirmCanceled) return;
     page.show(orig);
   }
 
