@@ -574,7 +574,7 @@
           (e.state.ordinal < page.ordinal) ? -1 : // backward
           0; // No movement.
 
-        var shouldConfirm = (0 !== movement && page.shouldConfirmPathLeave(e.state.path));
+        var shouldConfirm = (0 !== movement && page.shouldConfirmPathLeave(page.current));
         var confirmCanceled = shouldConfirm && !window.confirm('Confirm to leave?');
         if (!confirmCanceled) {
           // These will trigger one more onpopstate to restore the url,
@@ -654,7 +654,7 @@
     if (base && orig === path) return;
 
     e.preventDefault();
-    var shouldConfirm = page.shouldConfirmPathLeave(orig);
+    var shouldConfirm = page.shouldConfirmPathLeave(page.current);
     var confirmCanceled = shouldConfirm && !window.confirm('Confirm to leave?');
     if (confirmCanceled) return;
     page.show(orig);
