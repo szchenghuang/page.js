@@ -333,16 +333,20 @@
 
   page.pushConfirmLeavingPath = function(path) {
     if (page.pathsShouldConfirmLeave.constructor !== Array) {
-      page.pathsShouldConfirmLeave.constructor = [];
+      page.pathsShouldConfirmLeave.constructor = [ path ];
+      return;
+    }
+    if (page.pathsShouldConfirmLeave.includes(path)) {
+      return;
     }
     page.pathsShouldConfirmLeave.push(path);
   };
 
   page.removeConfirmLeavingPath = function(path) {
-    var found = false;
-    for (var i = 0; i < page.pathsShouldConfirmLeave.length; ++i) {
-      page.pathsShouldConfirmLeave.splice(i, 1);
-      found = true;
+    var index = page.pagesShouldConfirmLeave.indexOf( path );
+    var found = -1 !== index;
+    if (found) {
+      page.pathsShouldConfirmLeave.splice(index, 1);
     }
     return found;
   };
