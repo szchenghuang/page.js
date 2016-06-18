@@ -343,7 +343,7 @@
   };
 
   page.removeConfirmLeavingPath = function(path) {
-    var index = page.pagesShouldConfirmLeave.indexOf( path );
+    var index = page.pathsShouldConfirmLeave.indexOf( path );
     var found = -1 !== index;
     if (found) {
       page.pathsShouldConfirmLeave.splice(index, 1);
