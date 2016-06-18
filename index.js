@@ -141,7 +141,7 @@
 
   page.ordinal = -1;
 
-  page.pathsShouldConfirmLeave = [];
+  page.pathsToConfirmLeave = [];
 
   /**
    * Get or set basepath to `path`.
@@ -331,28 +331,28 @@
     }
   };
 
-  page.pushConfirmLeavingPath = function(path) {
-    if (page.pathsShouldConfirmLeave.constructor !== Array) {
-      page.pathsShouldConfirmLeave.constructor = [ path ];
+  page.addLeavingPathConfirm = function(path) {
+    if (page.pathsToConfirmLeave.constructor !== Array) {
+      page.pathsToConfirmLeave.constructor = [ path ];
       return;
     }
-    if (page.pathsShouldConfirmLeave.includes(path)) {
+    if (page.pathsToConfirmLeave.includes(path)) {
       return;
     }
-    page.pathsShouldConfirmLeave.push(path);
+    page.pathsToConfirmLeave.push(path);
   };
 
-  page.removeConfirmLeavingPath = function(path) {
-    var index = page.pathsShouldConfirmLeave.indexOf( path );
+  page.removeLeavingPathConfirm = function(path) {
+    var index = page.pathsToConfirmLeave.indexOf( path );
     var found = -1 !== index;
     if (found) {
-      page.pathsShouldConfirmLeave.splice(index, 1);
+      page.pathsToConfirmLeave.splice(index, 1);
     }
     return found;
   };
 
   page.shouldConfirmPathLeave = function(path) {
-    return page.pathsShouldConfirmLeave.includes(path);
+    return page.pathsToConfirmLeave.includes(path);
   };
 
 
