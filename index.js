@@ -58,6 +58,12 @@
   var hashbang = false;
 
   /**
+   * The default message displayed to confirm page leave.
+   */
+
+  var defaultLeaveConfirmMsg = 'Are you sure you want to leave this page?';
+
+  /**
    * Previous context, for capturing
    * page exit events.
    */
@@ -109,6 +115,12 @@
 
   page.callbacks = [];
   page.exits = [];
+
+  /**
+   * Map of leave confirmation messages.
+   */
+
+  page.leaveConfirmMsgs = {};
 
   /**
    * Current path being processed
@@ -179,6 +191,7 @@
       document.addEventListener(clickEvent, onclick, false);
     }
     if (true === options.hashbang) hashbang = true;
+    if (options.defaultLeaveConfirmMsg) defaultLeaveConfirmMsg = options.defaultLeaveConfirmMsg;
     if (!dispatch) return;
     var url = (hashbang && ~location.hash.indexOf('#!')) ? location.hash.substr(2) + location.search : location.pathname + location.search + location.hash;
     page.replace(url, null, true, dispatch);
@@ -331,7 +344,7 @@
     }
   };
 
-  page.addLeavingPathConfirm = function(path) {
+  page.addLeavingPathConfirm = function(path, confirmMsg) {
     if (page.pathsToConfirmLeave.constructor !== Array) {
       page.pathsToConfirmLeave.constructor = [ path ];
       return;
@@ -340,6 +353,7 @@
       return;
     }
     page.pathsToConfirmLeave.push(path);
+    page.leaveConfirmMsgs[ path ] = confirmMsg || defaultLeaveConfirmMsg;
   };
 
   page.removeLeavingPathConfirm = function(path) {
@@ -347,6 +361,7 @@
     var found = -1 !== index;
     if (found) {
       page.pathsToConfirmLeave.splice(index, 1);
+      delete page.leaveConfirmMsgs[ path ];
     }
     return found;
   };
@@ -355,6 +370,9 @@
     return page.pathsToConfirmLeave.includes(path);
   };
 
+  page.getLeaveConfirmMsg = function(path) {
+    return page.leaveConfirmMsgs[ path ] || defaultLeaveConfirmMsg;
+  };
 
   /**
    * Unhandled `ctx`. When it's not the initial
@@ -659,7 +677,7 @@
 
     e.preventDefault();
     var shouldConfirm = page.shouldConfirmPathLeave(page.current);
-    var confirmCanceled = shouldConfirm && !window.confirm('Confirm to leave?');
+    var confirmCanceled = shouldConfirm && !window.confirm(page.leaveMsgs[ page.current ]);
     if (confirmCanceled) return;
     page.show(orig);
   }
