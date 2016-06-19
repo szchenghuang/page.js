@@ -677,7 +677,7 @@
 
     e.preventDefault();
     var shouldConfirm = page.shouldConfirmPathLeave(page.current);
-    var confirmCanceled = shouldConfirm && !window.confirm(page.leaveMsgs[ page.current ]);
+    var confirmCanceled = shouldConfirm && !window.confirm(page.leaveConfirmMsgs[ page.current ]);
     if (confirmCanceled) return;
     page.show(orig);
   }
